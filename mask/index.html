@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>mask</title>
+</head>
+
+<body>
+
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.0.0/lib/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clmtrackr@1.1.2/build/clmtrackr.min.js"></script>
+    <script src="script.js"></script>
+    <script>
+        let outputWidth;
+        let outputHeight;
+
+        let faceTracker;
+        let videoInput;
+
+        let imgHat;
+        let imgMustache;
+
+        let selected = -1;
+
+        function preload() {
+            imgHat = loadImage("https://img.icons8.com/officel/80/000000/handlebar-mustache.png");
+            imgMustache = loadImage("https://img.icons8.com/officel/80/000000/handlebar-mustache.png");
+        }
+
+        function setup() {
+            const maxWidth = Math.min(windowWidth, windowHeight);
+            outputHeight = maxWidth * 0.75;
+            outputWidth = maxWidth;
+
+            createCanvas(outputWidth, outputHeight);
+
+
+            videoInput = createCapture(VIDEO);
+            videoInput.size(outputWidth, outputHeight);
+            videoInput.hide();
+
+            const sel = createSelect();
+            const selectList = ['Hat', 'Mustache'];
+            sel.option('Select filter', -1);
+            for (let i = 0; i < selectList.length; i++) {
+                sel.option(selectList[i], i);
+            }
+            sel.changed(applyFilter);
+
+            faceTracker = new clm.tracker();
+            faceTracker.init();
+            faceTracker.start(videoInput.elt);
+
+
+        }
+
+        function applyFilter() {
+            selected = this.selected();
+        }
+
+        function draw() {
+            image(videoInput, 0, 0, outputWidth, outputHeight);
+
+            switch (selected) {
+                case '-1':
+                    break;
+                case '0':
+                    drawHat();
+                    break;
+                case '1':
+                    drawMustache();
+                    break;
+            }
+        }
+
+        function drawHat() {
+            const position = faceTracker.getCurrentPosition();
+            if (position != false) {
+                push();
+                const wx = Math.abs(position[13][0] - position[1][0]) * 1.8;
+                const wy = Math.abs(position[7][1] - Math.min(position[16][1], position[20][1])) * 1.6;
+                translate(-wx / 2, -wy);
+                image(imgHat, position[41][0], position[41][1], wx, wy);
+                pop();
+            }
+        }
+
+        function drawMustache() {
+            const position = faceTracker.getCurrentPosition();
+            if (position != false) {
+                push();
+                const wx = Math.abs(position[13][0] - position[1][0]) * 1.2;
+                const wy = Math.abs(position[7][1] - Math.min(position[16][1], position[20][1])) * 1.2;
+                translate(-wx / 2, -wy / 2);
+                image(imgMustache, position[47][0], position[47][1], wx, wy);
+                pop();
+            }
+        }
+
+        function windowResized() {
+            const maxWidth = Math.min(windowWidth, windowHeight);
+            pixelDensity(1);
+            outputHeight = maxWidth * 0.75;
+            outputWidth = maxWidth;
+            resizeCanvas(outputWidth, outputHeight);
+        }
+
+    </script>
+
+</body>
+
+</html>
